@@ -1,0 +1,48 @@
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# IDE-specific files
+.classpath
+.project
+.settings/
+bin/
+
+# Gradle Wrapper files
+gradlew
+gradlew.bat
+
+# Build outputs
+**/build/
+!src/**/build/
+
+# Eclipse Gradle plugin generated files
+# Eclipse Core
+.project
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# Cache of project
+.gradletasknamecache
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Avoid ignore Gradle wrapper properties
+!gradle-wrapper.properties
+
+# General
+HELP.md
+
+# Other
+*.log
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.idea/
