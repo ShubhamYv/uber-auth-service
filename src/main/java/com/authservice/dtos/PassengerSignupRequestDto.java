@@ -1,6 +1,4 @@
-package com.authservice.dto;
-
-import java.util.Date;
+package com.authservice.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,13 +9,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class PassengerDto {
-	private String id;
-	private String name;
+@NoArgsConstructor
+public class PassengerSignupRequestDto {
 	private String email;
 	private String password;
 	private String phoneNumber;
-	private Date createdAt;
+	private String name;
 }

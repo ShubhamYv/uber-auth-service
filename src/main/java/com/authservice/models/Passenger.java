@@ -20,16 +20,20 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler" , "bookings"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "bookings" })
 public class Passenger extends BaseModel {
-    @Column(nullable = false)
-    private String name;
-    @Column(nullable = false)
-    private String phoneNumber;
-    @Column(nullable = false)
-    private String email;
-    @Column(nullable = false)
-    private String password;
-    @OneToMany(mappedBy = "passenger")
-    private List<Booking> bookings = new ArrayList<>();
+	@Column(nullable = false)
+	private String name;
+	
+	@Column(nullable = false)
+	private String phoneNumber;
+	
+	@Column(nullable = false)
+	private String email;
+	
+	@Column(nullable = false)
+	private String password;
+	
+	@OneToMany(mappedBy = "passenger")
+	private List<Booking> bookings = new ArrayList<>();
 }
