@@ -2,17 +2,11 @@ package com.authservice.dtos;
 
 import java.util.Date;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class PassengerDto {
 	private Long id;
 	private String name;

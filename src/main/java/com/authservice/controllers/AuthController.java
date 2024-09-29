@@ -1,12 +1,10 @@
 package com.authservice.controllers;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.authservice.constants.ErrorCodeEnum;
 import com.authservice.dtos.PassengerDto;
@@ -16,6 +14,7 @@ import com.authservice.exception.UberAuthException;
 import com.authservice.pojo.PassengerSigninRequest;
 import com.authservice.pojo.PassengerSignupRequest;
 import com.authservice.services.AuthService;
+import com.authservice.utils.LogMessage;
 import com.authservice.utils.PassengerSigninMapper;
 import com.authservice.utils.PassengerSignupMapper;
 
@@ -26,6 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+
+	private static final Logger LOGGER = LogManager.getLogger(AuthController.class);
 
 	private final AuthService authService;
 	private final PassengerSignupMapper passengerSignupMapper;
@@ -40,37 +41,58 @@ public class AuthController {
 
 	@PostMapping("/signup/passenger")
 	public ResponseEntity<PassengerDto> signUp(@RequestBody PassengerSignupRequest request) {
+		LogMessage.setLogMessagePrefix("/SIGNUP_PASSENGER");
+
+		if (request == null) {
+			LogMessage.log(LOGGER, "Received null signup request");
+			return ResponseEntity.badRequest().build();
+		}
+
+		LogMessage.log(LOGGER, "Processing passenger signup request: " + request);
+
 		PassengerSignupRequestDto passengerSignupRequestDto = passengerSignupMapper.pojoToDto(request);
 		PassengerDto passengerDto = authService.signupPassenger(passengerSignupRequestDto);
-		return new ResponseEntity<>(passengerDto, HttpStatus.CREATED);
+
+		LogMessage.log(LOGGER, "Passenger signed up successfully: " + passengerDto);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(passengerDto);
 	}
 
 	@PostMapping("/signin/passenger")
 	public ResponseEntity<String> signIn(@RequestBody PassengerSigninRequest request,
 			HttpServletResponse httpServletResponse) {
+		LogMessage.setLogMessagePrefix("/SIGNIN_PASSENGER");
 
-		System.out.println("Inside AuthController|signIn||request:" + request);
+		if (request == null) {
+			LogMessage.log(LOGGER, "Received null signin request");
+			return ResponseEntity.badRequest().build();
+		}
+
+		LogMessage.log(LOGGER, "Processing passenger signin request: " + request);
+
 		PassengerSigninRequestDto passengerSigninRequestDto = passengerSigninMapper.pojoToDto(request);
-		System.out.println("Inside AuthController|signIn||passengerSigninRequestDto::" + passengerSigninRequestDto);
 		String jwtToken = authService.signInPassenger(passengerSigninRequestDto, httpServletResponse);
-		System.out.println("Inside AuthController|signIn||jwtToken::" + jwtToken);
-		return new ResponseEntity<>(jwtToken, HttpStatus.OK);
+
+		LogMessage.log(LOGGER, "Passenger signed in successfully. JWT Token: " + jwtToken);
+
+		return ResponseEntity.ok(jwtToken);
 	}
 
 	@GetMapping("/validate")
-	public ResponseEntity<String> validate(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<String> validate(HttpServletRequest request) {
+		LogMessage.setLogMessagePrefix("/VALIDATE");
 		try {
 			Cookie[] cookies = request.getCookies();
 			if (cookies != null) {
 				for (Cookie cookie : cookies) {
-					System.out.println("Cookie: {} = {}" + cookie.getName() + " " + cookie.getValue());
+					LogMessage.log(LOGGER, "Cookie:: name->" + cookie.getName() + " |value-> " + cookie.getValue());
 				}
 			} else {
-				System.out.println("No cookies found in the request");
+				LogMessage.log(LOGGER, "No cookies found in the request");
 			}
-			return new ResponseEntity<>("Success", HttpStatus.OK);
+			return ResponseEntity.ok("Success");
 		} catch (Exception e) {
-			System.out.println("Error during validation: {}" + e.getMessage());
+			LogMessage.logException(LOGGER, e);
 			throw new UberAuthException(ErrorCodeEnum.GENERIC_EXCEPTION.getErrorMessage(),
 					ErrorCodeEnum.GENERIC_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

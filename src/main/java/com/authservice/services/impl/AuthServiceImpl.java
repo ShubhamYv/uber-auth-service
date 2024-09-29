@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.crypto.SecretKey;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +25,7 @@ import com.authservice.exception.UberAuthException;
 import com.authservice.models.Passenger;
 import com.authservice.repositories.PassengerRepository;
 import com.authservice.services.AuthService;
+import com.authservice.utils.LogMessage;
 import com.authservice.utils.PassengerMapper;
 
 import io.jsonwebtoken.Jwts;
@@ -33,6 +36,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LogManager.getLogger(AuthServiceImpl.class);
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -77,6 +82,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public PassengerDto signupPassenger(PassengerSignupRequestDto passengerSignupRequestDto) {
+        if (passengerSignupRequestDto == null) {
+            throw new UberAuthException(
+                ErrorCodeEnum.NULL_REQUEST_DTO.getErrorMessage(),
+                ErrorCodeEnum.NULL_REQUEST_DTO.getErrorCode(),
+                HttpStatus.BAD_REQUEST
+            );
+        }
+
         Optional<Passenger> existingPassenger = passengerRepository.findPassengerByEmail(passengerSignupRequestDto.getEmail());
         
         if (existingPassenger.isPresent()) {
@@ -96,8 +109,10 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
             Passenger newPassenger = passengerRepository.save(passenger);
+            LogMessage.log(logger, "New passenger signed up: "+ newPassenger.getEmail());
             return passengerMapper.modelToDto(newPassenger);
         } catch (Exception e) {
+            LogMessage.logException(logger, e);
             throw new UberAuthException(
                 ErrorCodeEnum.SIGNUP_FAILED.getErrorMessage(),
                 ErrorCodeEnum.SIGNUP_FAILED.getErrorCode(),
@@ -108,26 +123,33 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String signInPassenger(PassengerSigninRequestDto passengerSigninRequestDto, HttpServletResponse response) {
+        if (passengerSigninRequestDto == null) {
+            throw new UberAuthException(
+                    ErrorCodeEnum.NULL_REQUEST_DTO.getErrorMessage(),
+                    ErrorCodeEnum.NULL_REQUEST_DTO.getErrorCode(),
+                    HttpStatus.BAD_REQUEST
+                );
+        }
+
         try {
-        	System.out.println("Inside AuthServiceImpl|signInPassenger||passengerSigninRequestDto::"+passengerSigninRequestDto);
-        	System.out.println("Inside AuthServiceImpl|signInPassenger||HttpServletResponse::"+response);
+            LogMessage.log(logger, "Attempting to sign in passenger: "+ passengerSigninRequestDto.getEmail());
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(passengerSigninRequestDto.getEmail(), 
                                                         passengerSigninRequestDto.getPassword())
             );
-            System.out.println("Inside AuthServiceImpl|signInPassenger||authentication::"+authentication);
             String jwtToken = generateToken(authentication);
-            System.out.println("Inside AuthServiceImpl|signInPassenger||jwtToken::"+jwtToken);
+            LogMessage.log(logger, "Successfully signed in passenger: "+ passengerSigninRequestDto.getEmail());
             response.addCookie(createJwtCookie(jwtToken));
             return jwtToken;
         } catch (AuthenticationException e) {
-        	System.out.println("Inside AuthServiceImpl|signInPassenger||AuthenticationException::"+ e);
+            LogMessage.logException(logger, e);
             throw new UberAuthException(
                 ErrorCodeEnum.AUTHENTICATION_FAILED.getErrorMessage(),
                 ErrorCodeEnum.AUTHENTICATION_FAILED.getErrorCode(),
                 HttpStatus.UNAUTHORIZED
             );
         } catch (Exception e) {
+            LogMessage.logException(logger, e);
             throw new UberAuthException(
                 ErrorCodeEnum.JWT_GENERATION_FAILED.getErrorMessage(),
                 ErrorCodeEnum.JWT_GENERATION_FAILED.getErrorCode(),
@@ -147,20 +169,11 @@ public class AuthServiceImpl implements AuthService {
                 .compact();
     }
 
-    private Cookie createJwtCookie(String jwt) {
-        if (jwtCookieName == null || jwtCookieName.isEmpty()) {
-            throw new UberAuthException(
-                ErrorCodeEnum.JWT_COOKIE_NAME_NOT_CONFIGURED.getErrorMessage(),
-                ErrorCodeEnum.JWT_COOKIE_NAME_NOT_CONFIGURED.getErrorCode(),
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-
-        Cookie cookie = new Cookie(jwtCookieName, jwt);
+    private Cookie createJwtCookie(String jwtToken) {
+        Cookie cookie = new Cookie(jwtCookieName, jwtToken);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
         cookie.setMaxAge(cookieMaxAge);
+        cookie.setPath("/");
         return cookie;
     }
 }

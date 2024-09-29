@@ -13,11 +13,11 @@ public class PassengerSigninMapper {
 			return null;
 		}
 
-		PassengerSigninRequest pojo = new PassengerSigninRequest();
-		pojo.setEmail(passengerSigninRequestDto.getEmail());
-		pojo.setPassword(passengerSigninRequestDto.getPassword());
-
-		return pojo;
+		return PassengerSigninRequest
+				.builder()
+				.email(passengerSigninRequestDto.getEmail())
+				.password(passengerSigninRequestDto.getPassword())
+				.build();
 	}
 
 	public PassengerSigninRequestDto pojoToDto(PassengerSigninRequest pojo) {
@@ -25,6 +25,10 @@ public class PassengerSigninMapper {
 			return null;
 		}
 
-		return new PassengerSigninRequestDto(pojo.getEmail(), pojo.getPassword());
+		return PassengerSigninRequestDto
+				.builder()
+				.email(pojo.getEmail())
+				.password(pojo.getPassword())
+				.build();
 	}
 }
