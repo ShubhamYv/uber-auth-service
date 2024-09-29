@@ -34,15 +34,20 @@ public class SpringSecurityConfig {
         http
             .sessionManagement(mgmt -> mgmt.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/signup/**").permitAll() 
-                .requestMatchers("/api/v1/auth/signin/**").permitAll() 
+                .requestMatchers("/api/v1/auth/signup/**").permitAll()
+                .requestMatchers("/api/v1/auth/signin/**").permitAll()
                 .requestMatchers("/api/v1/auth/validate").authenticated()
             )
-//            .addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for stateless APIs
+            .addFilterBefore(jwtTokenValidator(), BasicAuthenticationFilter.class)
+            .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
+    }
+
+    @Bean
+    public JwtTokenValidator jwtTokenValidator() {
+        return new JwtTokenValidator();
     }
 
     @Bean

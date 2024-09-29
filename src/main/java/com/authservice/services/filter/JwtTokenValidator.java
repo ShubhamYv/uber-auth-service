@@ -19,7 +19,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,45 +30,39 @@ public class JwtTokenValidator extends OncePerRequestFilter {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${cookie.expiry}")
-    private long cookieExpiry;
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-    	
+       
         String jwt = request.getHeader(jwtHeader);
         
-        if (jwt != null && jwt.startsWith("Bearer ")) {
-            jwt = jwt.substring(7);
+        if (null != jwt) {
+			jwt = jwt.substring(7);
+			try {
+				// Decoding JWT token using secret key
+				SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+				Claims claims = Jwts.parserBuilder()
+						.setSigningKey(key)
+						.build()
+						.parseClaimsJws(jwt)
+						.getBody();
 
-            try {
-                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(key)
-                        .build()
-                        .parseClaimsJws(jwt)
-                        .getBody();
+				// Extracting email and authorities from JWT claims
+				String email = String.valueOf(claims.get("email"));
+				String authorities = String.valueOf(claims.get("authorities"));
 
-                String email = claims.get("email", String.class);
-                List<GrantedAuthority> authoritiesList = AuthorityUtils
-                        .commaSeparatedStringToAuthorityList(claims.get("authorities", String.class));
-
-                Authentication authentication = new UsernamePasswordAuthenticationToken(email, null, authoritiesList);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // Optionally create a cookie to store the JWT
-                Cookie cookie = new Cookie("JwtToken", jwt);
-                cookie.setHttpOnly(true);
-                cookie.setPath("/");
-                cookie.setMaxAge((int) cookieExpiry);
-                response.addCookie(cookie);
-
-            } catch (Exception e) {
-                throw new BadCredentialsException("Invalid Token: " + e.getMessage());
-            }
-        }
-
-        filterChain.doFilter(request, response);
-    }
+				// Converting authorities to list of GrantedAuthority
+				List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+				// Creating authentication object
+				Authentication authentication = new UsernamePasswordAuthenticationToken(email, null, auths);
+				// Setting authentication in Security Context
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+			} catch (Exception e) {
+				// Throw exception for invalid token
+				throw new BadCredentialsException("Invalid Token...");
+			}
+		}
+		
+		filterChain.doFilter(request, response);
+	}
 }
