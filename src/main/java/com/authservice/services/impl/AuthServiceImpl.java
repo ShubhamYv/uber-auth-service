@@ -22,11 +22,11 @@ import com.authservice.dtos.PassengerDto;
 import com.authservice.dtos.PassengerSigninRequestDto;
 import com.authservice.dtos.PassengerSignupRequestDto;
 import com.authservice.exception.UberAuthException;
-import com.authservice.models.Passenger;
 import com.authservice.repositories.PassengerRepository;
 import com.authservice.services.AuthService;
 import com.authservice.utils.LogMessage;
 import com.authservice.utils.PassengerMapper;
+import com.entityservice.models.Passenger;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

@@ -3,7 +3,7 @@ package com.authservice.utils;
 import org.springframework.stereotype.Component;
 
 import com.authservice.dtos.PassengerDto;
-import com.authservice.models.Passenger;
+import com.entityservice.models.Passenger;
 
 @Component
 public class PassengerMapper {
