@@ -71,6 +71,11 @@ public class AuthServiceImpl implements AuthService {
     @PostConstruct
     private void init() {
         if (secretKey == null || secretKey.isEmpty()) {
+            LogMessage.logException(logger, new UberAuthException(
+                ErrorCodeEnum.JWT_SECRET_NOT_CONFIGURED.getErrorMessage(),
+                ErrorCodeEnum.JWT_SECRET_NOT_CONFIGURED.getErrorCode(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            ));
             throw new UberAuthException(
                 ErrorCodeEnum.JWT_SECRET_NOT_CONFIGURED.getErrorMessage(),
                 ErrorCodeEnum.JWT_SECRET_NOT_CONFIGURED.getErrorCode(),
@@ -83,6 +88,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public PassengerDto signupPassenger(PassengerSignupRequestDto passengerSignupRequestDto) {
         if (passengerSignupRequestDto == null) {
+            LogMessage.warn(logger, "Received null signup request DTO");
             throw new UberAuthException(
                 ErrorCodeEnum.NULL_REQUEST_DTO.getErrorMessage(),
                 ErrorCodeEnum.NULL_REQUEST_DTO.getErrorCode(),
@@ -93,6 +99,7 @@ public class AuthServiceImpl implements AuthService {
         Optional<Passenger> existingPassenger = passengerRepository.findPassengerByEmail(passengerSignupRequestDto.getEmail());
         
         if (existingPassenger.isPresent()) {
+            LogMessage.warn(logger, "Email already exists: " + passengerSignupRequestDto.getEmail());
             throw new UberAuthException(
                 ErrorCodeEnum.EMAIL_ALREADY_EXISTS.getErrorMessage(),
                 ErrorCodeEnum.EMAIL_ALREADY_EXISTS.getErrorCode(),
@@ -109,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
             Passenger newPassenger = passengerRepository.save(passenger);
-            LogMessage.log(logger, "New passenger signed up: "+ newPassenger.getEmail());
+            LogMessage.info(logger, "New passenger signed up: " + newPassenger.getEmail());
             return passengerMapper.modelToDto(newPassenger);
         } catch (Exception e) {
             LogMessage.logException(logger, e);
@@ -124,6 +131,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String signInPassenger(PassengerSigninRequestDto passengerSigninRequestDto, HttpServletResponse response) {
         if (passengerSigninRequestDto == null) {
+            LogMessage.warn(logger, "Received null signin request DTO");
             throw new UberAuthException(
                     ErrorCodeEnum.NULL_REQUEST_DTO.getErrorMessage(),
                     ErrorCodeEnum.NULL_REQUEST_DTO.getErrorCode(),
@@ -132,13 +140,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
-            LogMessage.log(logger, "Attempting to sign in passenger: "+ passengerSigninRequestDto.getEmail());
+            LogMessage.info(logger, "Attempting to sign in passenger: " + passengerSigninRequestDto.getEmail());
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(passengerSigninRequestDto.getEmail(), 
                                                         passengerSigninRequestDto.getPassword())
             );
             String jwtToken = generateToken(authentication);
-            LogMessage.log(logger, "Successfully signed in passenger: "+ passengerSigninRequestDto.getEmail());
+            LogMessage.info(logger, "Successfully signed in passenger: " + passengerSigninRequestDto.getEmail());
             response.addCookie(createJwtCookie(jwtToken));
             return jwtToken;
         } catch (AuthenticationException e) {

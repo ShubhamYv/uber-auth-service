@@ -10,6 +10,10 @@ build/
 .settings/
 bin/
 
+# Logs
+logs/
+*.log
+
 # Gradle Wrapper files
 gradlew
 gradlew.bat
