@@ -12,11 +12,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EntityScan(basePackages = "com.entityservice.models")
 public class UberAuthServiceApplication {
 
-    private static final Logger logger = LoggerFactory.getLogger(UberAuthServiceApplication.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UberAuthServiceApplication.class);
 
-    public static void main(String[] args) {
-        logger.info("Starting Uber Auth Service Application...");
-        SpringApplication.run(UberAuthServiceApplication.class, args);
-        logger.info("Application started successfully.");
-    }
+	public static void main(String[] args) {
+		LOGGER.info("Starting Uber Auth Service Application...");
+		SpringApplication.run(UberAuthServiceApplication.class, args);
+		LOGGER.info("Application started successfully.");
+	}
 }
